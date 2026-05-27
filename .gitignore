@@ -1,0 +1,8 @@
+src/node_modules/
+raw/
+data_parquet/
+query-result/
+*.log
+.DS_Store
+.claude/settings.local.json
+.shipping-pat
