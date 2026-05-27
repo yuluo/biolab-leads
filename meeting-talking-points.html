@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2020 BioLab — Meeting Talking Points</title>
+<style>
+  :root {
+    --ink: #1a1d21;
+    --muted: #5b6470;
+    --line: #e3e7ec;
+    --accent: #0d6e6e;
+    --accent-soft: #e7f3f3;
+    --warn: #b4520a;
+    --warn-soft: #fbf0e6;
+    --bg: #fbfcfd;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+    margin: 0;
+    padding: 48px 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--accent); padding-bottom: 18px; margin-bottom: 8px; }
+  h1 { font-size: 1.7rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); font-size: 0.95rem; }
+  .meta { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 0.82rem; color: var(--muted); }
+  .meta span { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px; }
+  h2 {
+    font-size: 1.05rem; margin: 38px 0 4px; color: var(--accent);
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  h2 .n {
+    font-size: 0.72rem; font-weight: 700; color: #fff; background: var(--accent);
+    border-radius: 6px; padding: 2px 8px; letter-spacing: 0.03em;
+  }
+  h2 .tag { font-size: 0.68rem; font-weight: 600; color: var(--muted); margin-left: auto; text-transform: uppercase; letter-spacing: 0.06em; }
+  .lead { color: var(--muted); font-size: 0.9rem; margin: 2px 0 10px; }
+  ul { margin: 8px 0 4px; padding-left: 20px; }
+  li { margin: 5px 0; }
+  .say {
+    background: var(--accent-soft); border-left: 3px solid var(--accent);
+    padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 0.92rem;
+  }
+  .say b { color: var(--accent); }
+  .warn {
+    background: var(--warn-soft); border-left: 3px solid var(--warn);
+    padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 0.92rem;
+  }
+  .warn b { color: var(--warn); }
+  .qa { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 4px 18px; margin-top: 12px; }
+  .qa .q { font-weight: 650; margin: 14px 0 2px; }
+  .qa .a { color: var(--muted); font-size: 0.92rem; margin: 0 0 14px; }
+  .phase { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 14px 16px; }
+  .card h3 { margin: 0 0 6px; font-size: 0.9rem; }
+  .card .price { font-size: 0.78rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .card ul { font-size: 0.88rem; }
+  .asks { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 6px 18px; }
+  footer { margin-top: 44px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.8rem; }
+  @media (max-width: 620px) { .phase { grid-template-columns: 1fr; } }
+  @media print { body { background: #fff; padding: 0; } .say, .warn, .card, .qa, .asks { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>2020 BioLab — Meeting Talking Points</h1>
+  <div class="sub">Google Ads disapproval &rarr; SEO / organic pivot &middot; plus self-insured leads thread</div>
+  <div class="meta">
+    <span>Client: 20/20 BioLab (OneTest)</span>
+    <span>Goal: scope the digital-growth engagement</span>
+    <span>Stance: durable organic, not a paid workaround</span>
+  </div>
+</header>
+
+<h2><span class="n">1</span> Frame the problem honestly <span class="tag">Open</span></h2>
+<p class="lead">Lead with the diagnosis so they trust the recommendation that follows.</p>
+<ul>
+  <li>Their ads are most likely disapproved under Google's <b>Speculative &amp; Experimental Medical Treatment</b> policy &mdash; cancer-detection claims on a test that isn't FDA-approved.</li>
+  <li>Secondary triggers: <b>health-in-personalized-advertising</b> (cancer targeting/keywords), <b>healthcare restrictions</b> on DTC testing, and <b>unsubstantiated claims</b> (the sensitivity stats + fear framing).</li>
+  <li>First concrete step: read the <b>exact disapproval reason</b> in their Google Ads Policy Manager &mdash; fix the real thing, not a guess.</li>
+</ul>
+<div class="say"><b>Say:</b> &ldquo;The ad problem isn't a setting we can toggle &mdash; it's structural to how Google treats non-FDA cancer claims. So the smart money is on building a channel we actually control.&rdquo;</div>
+
+<h2><span class="n">2</span> Set expectations: paid is structurally capped <span class="tag">Reframe</span></h2>
+<ul>
+  <li>As long as the ads make detection-efficacy claims for a non-FDA test, paid search stays restricted. This is policy, not a bug to patch.</li>
+  <li>That's <i>why</i> organic + content is the durable answer &mdash; it reaches the same audience without the paid gate.</li>
+</ul>
+
+<h2><span class="n">3</span> E-E-A-T fix &mdash; and it does NOT need FDA approval <span class="tag">Key point</span></h2>
+<p class="lead">Correct the likely misconception up front.</p>
+<ul>
+  <li>E-E-A-T is a <b>content-credibility</b> concept, not a regulatory one. FDA approval gates <i>ads</i>, not organic trust.</li>
+  <li>Build credibility on the signals they <i>do</i> have: <b>CLIA/CAP lab accreditation</b>, the <b>peer-reviewed study</b> (27K dataset, cited to PubMed), <b>named credentialed team</b> + advisory board, physician oversight, honest limitations.</li>
+  <li>Comparable: Galleri and most cancer blood tests are <b>LDTs, not FDA-approved</b> &mdash; they rank on E-E-A-T, not approval.</li>
+</ul>
+<div class="say"><b>Say:</b> &ldquo;You don't need FDA approval to earn Google's trust organically &mdash; you need to show the lab accreditation, the published data, and real medical authorship. You already have those; they're just not surfaced.&rdquo;</div>
+
+<h2><span class="n">4</span> Education blog + keyword strategy <span class="tag">Growth</span></h2>
+<ul>
+  <li>Capture the informational queries paid can't serve: &ldquo;what is multi-cancer early detection,&rdquo; &ldquo;cancer screening by age/risk,&rdquo; per-cancer-type pages, &ldquo;[competitor] vs&rdquo; comparisons.</li>
+  <li>Topic-cluster hub, every post <b>medically reviewed</b> with a credentialed byline &mdash; the blog is how E-E-A-T scales.</li>
+  <li>Stay on screening/prevention/awareness framing; avoid symptom/diagnosis intent (misleading-content risk).</li>
+</ul>
+<div class="say"><b>Set the clock:</b> E-E-A-T fixes show in weeks; organic traffic compounds over <b>3&ndash;6+ months</b>. It's an asset, not a faucet.</div>
+
+<h2><span class="n">5</span> AI pre-publish compliance reviewer <span class="tag">Differentiator</span></h2>
+<p class="lead">This is the part that sets the offer apart &mdash; and it's reusable IP.</p>
+<ul>
+  <li>An AI <b>linter that runs before the human medical reviewer</b>: flags uncited claims, prohibited language (cure/prevent/diagnose/guarantee), missing disclaimers, fear-based tone.</li>
+  <li>It's a <b>pre-screen, not an approver</b> &mdash; a credentialed human still signs off (required for E-E-A-T and liability).</li>
+  <li>Scales the content pipeline and keeps every post defensible against FTC/Google scrutiny.</li>
+</ul>
+
+<h2><span class="n">6</span> If they still want paid &mdash; the legitimate path only <span class="tag">Protect them</span></h2>
+<ul>
+  <li>Advertise <b>content / brand / wellness</b>, not efficacy claims; or advertise a telehealth/physician service.</li>
+  <li><b>Manual appeal</b> with documentation (CLIA/CAP + published study). Try other channels (Meta, native, email, affiliate).</li>
+</ul>
+<div class="warn"><b>If they raise &ldquo;a company that bypassed it&rdquo;:</b> if that meant <b>cloaking</b> (showing reviewers a clean page, swapping landing pages, burner accounts), advise against it. Permanent Google bans when caught &mdash; but the real exposure is the <b>FTC</b> on unsubstantiated cancer claims, plus FDA/LDT and state AGs. Not worth it for a cancer product, and not something to put your name on.</div>
+
+<h2><span class="n">7</span> Proposed engagement <span class="tag">The ask</span></h2>
+<div class="phase">
+  <div class="card">
+    <div class="price">Fixed-cost &middot; foundation</div>
+    <h3>Audit + E-E-A-T implementation</h3>
+    <ul>
+      <li>Ads disapproval diagnosis</li>
+      <li>Credentials, reviewer bylines, CLIA/CAP + study citations</li>
+      <li>Schema markup + technical fixes</li>
+      <li>AI compliance reviewer build</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="price">Retainer &middot; compounding</div>
+    <h3>Content + organic growth</h3>
+    <ul>
+      <li>Blog content on keyword/topic map</li>
+      <li>Ongoing review pipeline</li>
+      <li>Light link building / digital PR</li>
+      <li>Search Console reporting</li>
+    </ul>
+  </div>
+</div>
+<div class="say"><b>Positioning:</b> &ldquo;Think of me as fractional digital-growth + data for the team &mdash; the role you can't justify hiring full-time yet.&rdquo;</div>
+
+<h2><span class="n">8</span> Anticipated questions</h2>
+<div class="qa">
+  <p class="q">Can you just get our ads approved?</p>
+  <p class="a">Not while they make non-FDA detection claims &mdash; that's policy. I can pursue a legitimate appeal and a compliant content-based ad approach, but organic is the channel we control.</p>
+  <p class="q">How long until we see results?</p>
+  <p class="a">E-E-A-T/technical fixes land in weeks; organic traffic compounds over 3&ndash;6+ months. I won't promise rankings &mdash; anyone who does is bluffing. I'll fix the foundation and execute best practices.</p>
+  <p class="q">Don't we need FDA approval for any of this?</p>
+  <p class="a">Not for organic credibility. CLIA/CAP + published evidence + medical authorship is the path. FDA only gates paid ads.</p>
+  <p class="q">Why not just do what [competitor] did?</p>
+  <p class="a">If that's cloaking/evasion, it risks bans and FTC action on cancer claims. I'll keep you on the durable, defensible side.</p>
+</div>
+
+<h2><span class="n">9</span> What I need from them</h2>
+<div class="asks">
+<ul>
+  <li><b>Access</b> to the Google Ads account (read the exact disapproval reason) + the website CMS.</li>
+  <li><b>Who is the named medical reviewer?</b> &mdash; required for E-E-A-T bylines.</li>
+  <li><b>The published study / validation data</b> and CLIA/CAP documentation to cite.</li>
+  <li><b>Reference rights</b> &mdash; permission to use this work as a (named or anonymized) case study for other biolab clients.</li>
+</ul>
+</div>
+
+<h2><span class="n">10</span> Secondary thread &mdash; self-insured employer leads <span class="tag">If time</span></h2>
+<ul>
+  <li>ExamWorks proved the self-insured-employer channel. I can build a scored list of similar employers (from public DOL Form 5500 data) for OneTest outreach.</li>
+  <li>Offer the first scored list as a value-add; charge for HubSpot integration + refresh. Keep the engine as reusable IP (built off-clock).</li>
+  <li>Don't over-pitch &mdash; gauge interest, then follow up separately.</li>
+</ul>
+
+<footer>
+  Internal prep notes &middot; 20/20 BioLab follow-up. Lead with the honest diagnosis, anchor on durable organic, protect them from the evasion path, and close on the fixed-cost foundation + reference rights.
+</footer>
+
+</div>
+</body>
+</html>
