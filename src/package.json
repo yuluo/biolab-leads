@@ -1,0 +1,16 @@
+{
+  "name": "biolab-leads",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DOL Form 5500 self-insured employer lead list — DuckDB-based query layer",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build-parquet": "node scripts/build_parquet.js",
+    "query": "node scripts/query.js"
+  },
+  "dependencies": {
+    "duckdb": "^1.1.3"
+  }
+}
