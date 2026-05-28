@@ -6,3 +6,5 @@ query-result/
 .DS_Store
 .claude/settings.local.json
 .shipping-pat
+.env
+.apollo-key

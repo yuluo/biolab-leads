@@ -104,6 +104,29 @@ npm --prefix src run query -- --table "SELECT funding_type, COUNT(*) AS employer
 - A literal next-step hint: *"Try `/search self-insured employers in CA
   with 500+ employees` to query the dataset."*
 
+## Phase 4 (optional) — Apollo enrichment key
+
+`/search` automatically enriches result EINs with HR/benefits contacts
+(name, title, business email, LinkedIn) via Apollo.io, and persists them
+locally so future searches over the same companies cost nothing. This is
+**BYO-key** — we never redistribute licensed contact data.
+
+Check whether a key is configured:
+
+```bash
+test -s .env && grep -q '^APOLLO_API_KEY=.\+' .env
+```
+
+- Exit 0 = key present. Tell the user enrichment is wired up.
+- Non-zero = no key. Tell the user (verbatim):
+
+  > *Enrichment is optional. To turn it on later, get an Apollo.io API
+  > key (apollo.io → Settings → Integrations → API) and paste it after
+  > `APOLLO_API_KEY=` in `.env`. Until then, `/search` works fine —
+  > you'll just get company-level rows without contacts.*
+
+Do not block setup on this; enrichment is an opt-in layer.
+
 ## Failure handling
 
 - **`bash` not available** (plain Windows cmd): tell the user to open Git

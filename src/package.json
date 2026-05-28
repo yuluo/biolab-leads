@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build-parquet": "node scripts/build_parquet.js",
-    "query": "node scripts/query.js"
+    "query": "node scripts/query.js",
+    "enrich": "node scripts/enrich.js"
   },
   "dependencies": {
     "duckdb": "^1.1.3"

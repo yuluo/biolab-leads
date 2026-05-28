@@ -156,3 +156,36 @@ FROM employers
 WHERE funding_type = 'self-insured' AND state = 'CA'
 LIMIT 100;
 ```
+
+---
+
+### 11. Enriched export (the default for the CSV dump)
+
+> *"export self-insured tech employers in CA with HR contacts"*
+
+Use the `leads` view in the CSV dump so contact columns ride along.
+`/search` auto-runs enrichment for the result EINs before this step.
+
+```sql
+SELECT *
+FROM leads
+WHERE funding_type = 'self-insured'
+  AND state = 'CA'
+  AND (business_code LIKE '51%' OR business_code LIKE '54%')
+LIMIT 100;
+```
+
+---
+
+### 12. Only employers with an enriched contact
+
+> *"only the CA self-insured leads that have an HR email"*
+
+```sql
+SELECT *
+FROM leads
+WHERE funding_type = 'self-insured'
+  AND state = 'CA'
+  AND contact_email IS NOT NULL
+LIMIT 100;
+```
