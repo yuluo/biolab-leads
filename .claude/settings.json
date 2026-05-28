@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash src/scripts/install_node.sh)",
+      "Bash(bash src/scripts/update.sh)",
+      "Bash(npm --prefix src install)",
+      "Bash(npm --prefix src install *)",
+      "Bash(npm --prefix src run build-parquet)",
+      "Bash(npm --prefix src run build-parquet *)",
+      "Bash(npm --prefix src run query *)",
+      "Bash(node src/scripts/query.js *)",
+      "Bash(node -v)",
+      "Bash(node --version)",
+      "Bash(npm view *)",
+      "Bash(mkdir -p query-result)",
+      "Bash(test -d *)",
+      "Bash(test -f *)",
+      "Bash(ls *)",
+      "Bash(wc *)",
+      "Bash(echo *)",
+      "Bash(cat *)",
+      "Bash(grep *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(find *)",
+      "Bash(pwd)",
+      "Bash(git fetch *)",
+      "mcp__notion__notion-search",
+      "mcp__notion__notion-fetch"
+    ]
+  }
+}
