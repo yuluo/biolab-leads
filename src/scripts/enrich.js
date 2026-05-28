@@ -21,6 +21,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { parseArgs } = require('node:util');
 const duckdb = require('duckdb');
 
 const ROOT = path.resolve(__dirname, '..', '..');
@@ -34,16 +35,38 @@ const MAX_CONTACTS_PER_COMPANY = 2;     // cost cap per company (~ MAX × 1 cred
 const ORG_MATCH_MIN     = 0.55;         // reject low-confidence org matches
 
 // ---------- args ----------
-const opts = { eins: null, einsFile: null, limit: Infinity, dryRun: false, confirm: false, titlesPath: DEFAULT_TITLES };
-for (let i = 2, a = process.argv; i < a.length; i++) {
-  const k = a[i];
-  if (k === '--eins')        opts.eins       = a[++i];
-  else if (k === '--eins-file') opts.einsFile = a[++i];
-  else if (k === '--limit')  opts.limit      = parseInt(a[++i], 10);
-  else if (k === '--dry-run') opts.dryRun    = true;
-  else if (k === '--confirm') opts.confirm   = true;
-  else if (k === '--titles') opts.titlesPath = a[++i];
-  else { console.error('enrich: unknown arg', k); process.exit(2); }
+// Use Node 20's built-in parseArgs: strict-mode rejects unknown flags and
+// missing required values automatically (e.g. `--eins --dry-run` fails fast
+// instead of silently consuming the next flag).
+let parsed;
+try {
+  parsed = parseArgs({
+    options: {
+      eins:        { type: 'string' },
+      'eins-file': { type: 'string' },
+      limit:       { type: 'string' },   // parsed to int below
+      titles:      { type: 'string' },
+      'dry-run':   { type: 'boolean', default: false },
+      confirm:     { type: 'boolean', default: false },
+    },
+    strict: true,
+  }).values;
+} catch (e) {
+  console.error('enrich:', e.message);
+  process.exit(2);
+}
+const opts = {
+  eins:       parsed.eins ?? null,
+  einsFile:   parsed['eins-file'] ?? null,
+  limit:      Infinity,
+  dryRun:     parsed['dry-run'],
+  confirm:    parsed.confirm,
+  titlesPath: parsed.titles ?? DEFAULT_TITLES,
+};
+if (parsed.limit !== undefined) {
+  const n = parseInt(parsed.limit, 10);
+  if (!Number.isFinite(n) || n <= 0) { console.error('enrich: --limit must be a positive integer'); process.exit(2); }
+  opts.limit = n;
 }
 
 // ---------- key ----------
@@ -83,8 +106,13 @@ function loadAttemptedSet() {
   }
   return set;
 }
+const ensuredDirs = new Set();
 function appendJsonl(file, row) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const dir = path.dirname(file);
+  if (!ensuredDirs.has(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    ensuredDirs.add(dir);
+  }
   fs.appendFileSync(file, JSON.stringify(row) + '\n');
 }
 

@@ -47,8 +47,13 @@ const conn = db.connect();
 const threads = require('os').cpus().length;
 
 const q = (s) => s.replace(/'/g, "''");
-const contactsSrc = fs.existsSync(CONTACTS_JSONL)
-  ? `SELECT * FROM read_json_auto('${q(CONTACTS_JSONL)}', format='newline_delimited')`
+// Guard against an empty JSONL file (DuckDB's read_json_auto cannot infer a schema
+// from zero bytes and would crash). Dedup defensively in case enrich is re-run after
+// the attempted-cache is cleared — keep the latest row per (ein, contact_email).
+const contactsExists = fs.existsSync(CONTACTS_JSONL) && fs.statSync(CONTACTS_JSONL).size > 0;
+const contactsSrc = contactsExists
+  ? `SELECT * FROM read_json_auto('${q(CONTACTS_JSONL)}', format='newline_delimited')
+     QUALIFY ROW_NUMBER() OVER (PARTITION BY ein, contact_email ORDER BY enriched_at DESC) = 1`
   : `SELECT NULL::VARCHAR ein, NULL::VARCHAR contact_name, NULL::VARCHAR contact_title,
             NULL::VARCHAR contact_email, NULL::VARCHAR contact_linkedin,
             NULL::VARCHAR org_domain, NULL::DOUBLE match_confidence,
