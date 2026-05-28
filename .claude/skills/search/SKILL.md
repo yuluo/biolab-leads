@@ -71,24 +71,62 @@ npm --silent --prefix src run query -- "SELECT COUNT(*) AS total FROM employers 
 npm --silent --prefix src run query -- --table "SELECT * FROM employers WHERE <predicate> LIMIT 10"
 ```
 
-**(c) Full CSV dump.** Write the user-requested result set to
+**(c) Enrich the result set's EINs.** Before writing the CSV, run Apollo
+enrichment on the EINs that will appear in the final result, so the CSV
+carries decision-maker contact columns. `enrich.js` is a standalone
+EIN-driven primitive — pipe EINs on stdin; it handles its own caching
+against `data_parquet/contacts_attempted.jsonl` (already-attempted EINs
+spend nothing).
+
+First grab the EINs the user will get:
+
+```bash
+npm --silent --prefix src run query -- --csv \
+  "SELECT ein FROM employers WHERE <predicate> ORDER BY <same ORDER as final> LIMIT 100" \
+  | tail -n +2 \
+  | npm --silent --prefix src run enrich
+```
+
+How to read the outcome:
+- **Exit 0** → enrichment ran (or all EINs were already cached); proceed.
+- **Exit 2 + "SAFETY: pending=N exceeds 100"** → more than 100 uncached
+  EINs. Surface the line to the user (it includes the credit estimate),
+  ask for a one-word confirm, and on `yes` re-run the pipeline with
+  `npm --silent --prefix src run enrich -- --confirm`. On `no`, skip
+  enrichment and proceed to the CSV dump using the **`employers`** view
+  (uneriched).
+- **Exit 1 + "APOLLO_API_KEY missing"** → graceful degrade. Tell the
+  user enrichment is BYO-key (`.env` → `APOLLO_API_KEY=…`), then proceed
+  to the CSV dump using the **`employers`** view.
+
+`enrich.js`'s first log line (`enrich: input=… cached=… pending=…
+est_credits<=…`) is what you summarize back to the user — one short line.
+
+**(d) Full CSV dump.** Write the user-requested result set to
 `query-result/<slug>.csv` at the project root. Use the user-supplied
 `LIMIT` (default 100; drop `LIMIT` on "all" / "no limit" / "export" /
 "everything" / "every" / "complete list"). The `--silent` flag is
-**required** here so only CSV rows land in the file.
+**required** here so only CSV rows land in the file. Query the
+**`leads`** view (which is `employers LEFT JOIN contacts`) so the CSV
+carries the contact columns; rows without a contact still appear with
+null `contact_*` fields, so the list stays complete.
 
 ```bash
 mkdir -p query-result
-npm --silent --prefix src run query -- --csv "SELECT * FROM employers WHERE <predicate> LIMIT 100" \
+npm --silent --prefix src run query -- --csv "SELECT * FROM leads WHERE <predicate> LIMIT 100" \
   > query-result/<slug>.csv
 ```
+
+If enrichment was skipped (no API key, or the user declined the >100
+gate), query `employers` instead of `leads` so the CSV doesn't carry
+all-null contact columns.
 
 `<slug>` is a short kebab-case summary (e.g.
 `self-insured-ca-500plus`) with a UTC timestamp suffix
 `-YYYYMMDDTHHMMSS` so repeated runs don't clobber.
 
 If the user supplied no predicate (e.g. *"show me some employers"*), skip
-both the count and the CSV dump — just run the 10-row preview.
+the count, enrichment, and CSV dump — just run the 10-row preview.
 
 ## Step 3 — Respond
 
@@ -98,8 +136,13 @@ Format the reply as:
 2. **Translated SQL**, in a ```sql fenced block.
 3. **Total matches**: `**Total matches: 3,589**` on its own line.
 4. **10-row preview table** from step 2b.
-5. **Saved-to line**: `Full result (N rows) saved to query-result/<slug>.csv.`
-6. If the CSV was capped (`total > LIMIT`), add: *"Increase the limit or
+5. **Enrichment one-liner** (only when (c) actually ran):
+   `Enriched N companies (M cached, est ~$X). K contacts found.`
+   When enrichment was skipped, say so in one line: *"Enrichment skipped:
+   no APOLLO_API_KEY (CSV is company-only)."* or *"Enrichment skipped per
+   your choice."*
+6. **Saved-to line**: `Full result (N rows) saved to query-result/<slug>.csv.`
+7. If the CSV was capped (`total > LIMIT`), add: *"Increase the limit or
    say 'no limit' to capture more."*
 
 ## Step 4 — Follow-ups

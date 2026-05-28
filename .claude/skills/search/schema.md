@@ -1,16 +1,21 @@
-# `employers` view — schema reference
+# `employers` / `contacts` / `leads` views — schema reference
 
-The skill queries a DuckDB view named **`employers`** backed by a single
-parquet file (`data_parquet/employers.parquet`). **One row per employer
-(sponsor EIN)** — multiple welfare-plan filings are rolled up. ~62k rows.
+`scripts/query.js` exposes three views over the local data:
 
-Built from DOL Form 5500 + Schedule A (plan years 2024–2025). Contact
-fields come from each employer's **most recent** welfare filing; funding
-classification and counts are rolled up across all of that employer's
-welfare plans.
+| view | source | grain |
+|---|---|---|
+| `employers` | `data_parquet/employers.parquet` | one row per employer (sponsor EIN) — Form 5500 + Schedule A, rolled up. ~62k rows. |
+| `contacts`  | `data_parquet/contacts.jsonl` (Apollo enrichment, gitignored PII) | one row per (ein, contact_email); empty if no enrichment has run yet. |
+| `leads`     | `employers LEFT JOIN contacts USING (ein)` | one row per (employer, contact); employers with no contact still appear with null contact fields. |
 
-Connection is established by `scripts/query.js`; SQL passed to
-`npm run query -- "<SQL>"` runs against this view.
+**Default for searches:** query `employers` for counts/previews; query
+`leads` for the exported CSV when contact columns are wanted.
+
+Built from DOL Form 5500 + Schedule A (plan years 2024–2025). Employer
+contact fields (`signer_name`, `phone`, etc.) come from each employer's
+**most recent** welfare filing; funding classification and counts are
+rolled up across all of that employer's welfare plans. Apollo enrichment
+adds decision-maker columns separately on the `contacts` side.
 
 ---
 
@@ -37,6 +42,28 @@ Connection is established by `scripts/query.js`; SQL passed to
 | 17 | `has_health_insurance` | BOOLEAN | Any Schedule A reports health/HMO/PPO/indemnity insurance |
 | 18 | `carriers` | VARCHAR | Insurance carrier names from the latest filing's Schedule A, `; `-joined |
 | 19 | `latest_plan_year` | INTEGER | Most recent plan year on file (2024 or 2025) |
+
+### `contacts` view — Apollo-enriched decision-makers
+
+Populated on the fly by `/search` (calls `enrich.js`) and persisted to
+`data_parquet/contacts.jsonl`. Future searches over the same EINs reuse
+the cache and spend nothing.
+
+| Column | Type | Meaning |
+|---|---|---|
+| `ein` | VARCHAR | FK to `employers.ein` |
+| `contact_name` | VARCHAR | Decision-maker full name |
+| `contact_title` | VARCHAR | e.g. "CHRO", "VP People", "Benefits Director" |
+| `contact_email` | VARCHAR | Business email (the unique key with `ein`) |
+| `contact_linkedin` | VARCHAR | LinkedIn URL, nullable |
+| `org_domain` | VARCHAR | Matched Apollo organization domain |
+| `match_confidence` | DOUBLE | Sponsor-name ↔ Apollo-org-name similarity (0–1); flag rows < 0.7 |
+| `enriched_at` | VARCHAR | ISO timestamp |
+
+The `leads` view exposes all `employers` columns plus the `contacts`
+columns above (left-joined on `ein`). One employer can yield 0, 1, or 2
+contacts → 0, 1, or 2 rows in `leads`. Rows with no contact have null
+`contact_*` fields.
 
 ---
 
