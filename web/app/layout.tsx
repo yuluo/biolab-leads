@@ -20,8 +20,9 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "biolab-leads — self-insured employer index",
-  description: "Search self-insured employers from DOL Form 5500 and surface benefits contacts.",
+  title: "Self-Insured · Ant Technology",
+  description:
+    "Search self-insured U.S. employers (DOL Form 5500) and surface benefits & HR contacts.",
 };
 
 export default function RootLayout({
