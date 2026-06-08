@@ -189,9 +189,37 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="border-t border-line">
-        <div className="mx-auto max-w-6xl px-6 py-5 font-mono text-[11px] text-ink-faint">
-          biolab-leads · public DOL data · contacts via your own Apollo key
+      <footer className="mt-16 border-t border-line bg-panel">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-sm">
+            <div className="font-display text-xl text-ink">Ant Technology</div>
+            <p className="mt-1.5 text-sm text-ink-soft">
+              Vertical AI products &amp; software for mission-critical clients.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 font-mono text-xs md:items-end">
+            <span className="text-[10px] uppercase tracking-[0.16em] text-ink-faint">Contact</span>
+            <a
+              href="https://ant-tek.com"
+              target="_blank"
+              rel="noreferrer"
+              className="text-accent transition-colors hover:text-accent-deep"
+            >
+              ant-tek.com ↗
+            </a>
+            <a
+              href="mailto:yuanting.luo@ant-tek.com"
+              className="text-ink-soft transition-colors hover:text-accent"
+            >
+              yuanting.luo@ant-tek.com
+            </a>
+          </div>
+        </div>
+        <div className="border-t border-line">
+          <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-x-4 gap-y-1 px-6 py-4 font-mono text-[10px] text-ink-faint">
+            <span>© {new Date().getFullYear()} Ant Technology. All rights reserved.</span>
+            <span>Public DOL Form 5500 data · contacts via your own Apollo key</span>
+          </div>
         </div>
       </footer>
     </div>
