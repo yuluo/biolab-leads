@@ -1,0 +1,8 @@
+# Netlify build config — deploys the static export of the web/ app.
+[build]
+  base = "web"
+  command = "npm run build"
+  publish = "out"
+
+[build.environment]
+  NODE_VERSION = "20"
