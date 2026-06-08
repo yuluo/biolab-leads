@@ -1,0 +1,80 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100" height="100" fill="#1a365d" rx="15"/>
+  
+  <!-- Tech grid pattern background -->
+  <defs>
+    <pattern id="techGrid" patternUnits="userSpaceOnUse" width="10" height="10">
+      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#7fb3d3" stroke-width="0.5" opacity="0.2"/>
+    </pattern>
+  </defs>
+  <rect width="100" height="100" fill="url(#techGrid)"/>
+  
+  <!-- Tech-focused design elements -->
+  <g transform="translate(50, 50)">
+    <!-- Circuit board style connections -->
+    <g stroke="#7fb3d3" stroke-width="2" fill="none" opacity="0.6">
+      <!-- Horizontal connections -->
+      <line x1="-25" y1="-15" x2="-10" y2="-15"/>
+      <line x1="10" y1="-15" x2="25" y2="-15"/>
+      <line x1="-25" y1="15" x2="-10" y2="15"/>
+      <line x1="10" y1="15" x2="25" y2="15"/>
+      
+      <!-- Vertical connections -->
+      <line x1="-15" y1="-25" x2="-15" y2="-10"/>
+      <line x1="15" y1="-25" x2="15" y2="-10"/>
+      <line x1="-15" y1="10" x2="-15" y2="25"/>
+      <line x1="15" y1="10" x2="15" y2="25"/>
+    </g>
+    
+    <!-- Data nodes/connection points -->
+    <circle cx="-15" cy="-15" r="2" fill="#7fb3d3" opacity="0.8"/>
+    <circle cx="15" cy="-15" r="2" fill="#7fb3d3" opacity="0.8"/>
+    <circle cx="-15" cy="15" r="2" fill="#7fb3d3" opacity="0.8"/>
+    <circle cx="15" cy="15" r="2" fill="#7fb3d3" opacity="0.8"/>
+    
+    <!-- Central processing unit style background -->
+    <rect x="-20" y="-20" width="40" height="40" 
+          fill="none" 
+          stroke="#7fb3d3" 
+          stroke-width="1.5" 
+          opacity="0.4"
+          rx="3"/>
+    
+    <!-- Inner tech frame -->
+    <rect x="-12" y="-12" width="24" height="24" 
+          fill="none" 
+          stroke="#7fb3d3" 
+          stroke-width="1" 
+          opacity="0.6"
+          rx="2"/>
+    
+    <!-- Letter A - clean and bold -->
+    <g>
+      <path d="M -10 12 L -2 -12 L 2 -12 L 10 12 M -6 2 L 6 2" 
+            stroke="#ffffff" 
+            stroke-width="3.5" 
+            fill="none" 
+            stroke-linecap="round" 
+            stroke-linejoin="round"/>
+    </g>
+    
+    <!-- Corner tech accents -->
+    <g stroke="#7fb3d3" stroke-width="1.5" opacity="0.5">
+      <!-- Top corners -->
+      <path d="M -25 -20 L -25 -25 L -20 -25"/>
+      <path d="M 25 -20 L 25 -25 L 20 -25"/>
+      <!-- Bottom corners -->
+      <path d="M -25 20 L -25 25 L -20 25"/>
+      <path d="M 25 20 L 25 25 L 20 25"/>
+    </g>
+    
+    <!-- Digital/binary accent elements -->
+    <g fill="#7fb3d3" opacity="0.3" font-family="monospace" font-size="6">
+      <text x="-35" y="-30">01</text>
+      <text x="25" y="-30">10</text>
+      <text x="-35" y="35">11</text>
+      <text x="25" y="35">01</text>
+    </g>
+  </g>
+</svg>
