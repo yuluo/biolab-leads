@@ -8,10 +8,15 @@
   },
   "scripts": {
     "build-parquet": "node scripts/build_parquet.js",
+    "build-employer-json": "node scripts/build_employer_json.js",
     "query": "node scripts/query.js",
-    "enrich": "node scripts/enrich.js"
+    "enrich": "node scripts/enrich.js",
+    "deploy-data": "bash scripts/deploy_data.sh",
+    "seed-contacts": "node scripts/seed_contacts.js"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/lib-dynamodb": "^3.600.0",
     "duckdb": "^1.1.3"
   }
 }

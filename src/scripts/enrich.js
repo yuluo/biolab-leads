@@ -23,16 +23,16 @@ const fs = require('fs');
 const path = require('path');
 const { parseArgs } = require('node:util');
 const duckdb = require('duckdb');
+const {
+  createApolloClient, emailUnlocked, buildContactRecord, MAX_CONTACTS_PER_COMPANY,
+} = require('../../api/lib/enrich-core');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const EMPLOYERS_PARQUET = path.join(ROOT, 'data_parquet', 'employers.parquet');
 const CONTACTS_JSONL    = path.join(ROOT, 'data_parquet', 'contacts.jsonl');
 const ATTEMPTED_JSONL   = path.join(ROOT, 'data_parquet', 'contacts_attempted.jsonl');
 const DEFAULT_TITLES    = path.join(ROOT, 'src', 'config', 'hr_titles.json');
-const APOLLO_BASE       = 'https://api.apollo.io/api/v1';
 const SAFETY_THRESHOLD  = 100;          // pending EINs above this require --confirm
-const MAX_CONTACTS_PER_COMPANY = 2;     // cost cap per company (~ MAX × 1 credit/email)
-const ORG_MATCH_MIN     = 0.55;         // reject low-confidence org matches
 
 // ---------- args ----------
 // Use Node 20's built-in parseArgs: strict-mode rejects unknown flags and
@@ -116,120 +116,10 @@ function appendJsonl(file, row) {
   fs.appendFileSync(file, JSON.stringify(row) + '\n');
 }
 
-// ---------- string match ----------
-function normName(s) {
-  return (s || '').toLowerCase()
-    .replace(/[.,]/g, '')
-    .replace(/\b(inc|incorporated|llc|l\.l\.c|corp|corporation|company|co|ltd|limited)\b/g, '')
-    .replace(/\s+/g, ' ').trim();
-}
-// Build the q_organization_name we send to Apollo. Apollo's name filter is strict —
-// "ORACLE AMERICA, INC." returns 0 hits; "Oracle" returns 3 with the real Oracle on top.
-// Strip commas, legal suffixes, and trailing geographic words to leave the brand.
-function cleanQueryForApollo(name) {
-  return (name || '')
-    .replace(/,.*$/, '')
-    .replace(/[.]/g, '')
-    .replace(/\b(incorporated|corporation|company|limited)\b/gi, '')
-    .replace(/\b(inc|llc|corp|co|ltd|lp|plc)\b/gi, '')
-    .replace(/\s+(usa|us|north america|america)\s*$/gi, '')
-    .replace(/\s+/g, ' ').trim();
-}
-function nameSim(a, b) {
-  a = normName(a); b = normName(b);
-  if (!a || !b) return 0;
-  if (a === b) return 1;
-  if (a.includes(b) || b.includes(a)) return 0.85;
-  const ta = new Set(a.split(' ').filter(Boolean));
-  const tb = new Set(b.split(' ').filter(Boolean));
-  let inter = 0; ta.forEach(t => { if (tb.has(t)) inter++; });
-  return inter / Math.max(ta.size, tb.size, 1);
-}
-
-// ---------- Apollo ----------
-let apiKey;
-async function apolloPost(endpoint, body, attempt = 0) {
-  const res = await fetch(`${APOLLO_BASE}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-cache',
-      'X-Api-Key': apiKey,
-    },
-    body: JSON.stringify(body),
-  });
-  if (res.status === 429 && attempt < 3) {
-    await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
-    return apolloPost(endpoint, body, attempt + 1);
-  }
-  if (!res.ok) {
-    const t = await res.text().catch(() => '');
-    throw new Error(`Apollo ${endpoint} ${res.status} ${t.slice(0, 200)}`);
-  }
-  return res.json();
-}
-
-async function resolveOrg(emp) {
-  // Apollo's org search endpoint (the older mixed_companies/search returns 0 hits).
-  // Send a cleaned brand-only query; score against the original sponsor_name.
-  const q = cleanQueryForApollo(emp.sponsor_name);
-  if (!q) return null;
-  const r = await apolloPost('/organizations/search', {
-    q_organization_name: q,
-    page: 1, per_page: 5,
-  });
-  const orgs = r.organizations || r.accounts || [];
-  if (!orgs.length) return null;
-  let best = null, bestScore = 0;
-  for (const o of orgs) {
-    let s = nameSim(o.name, emp.sponsor_name);
-    const oState = (o.state || o.state_name || '').toLowerCase();
-    const oCity  = (o.city || '').toLowerCase();
-    if (emp.state && oState && oState === (emp.state || '').toLowerCase()) s += 0.05;
-    if (emp.city  && oCity  && oCity  === (emp.city  || '').toLowerCase()) s += 0.05;
-    if (s > bestScore) { bestScore = s; best = o; }
-  }
-  if (!best || bestScore < ORG_MATCH_MIN) return null;
-  return {
-    id: best.id,
-    domain: best.primary_domain || best.website_url || null,
-    name: best.name,
-    score: Math.min(bestScore, 1),
-  };
-}
-
-async function findPeople(orgId, titles) {
-  // mixed_people/search was deprecated; new endpoint is mixed_people/api_search.
-  // Returns people with id, first_name, title, masked last_name_obfuscated — use
-  // /people/match by id to reveal the real last name + email.
-  const r = await apolloPost('/mixed_people/api_search', {
-    organization_ids: [orgId],
-    person_titles: titles,
-    page: 1, per_page: 10,
-  });
-  const people = r.people || r.contacts || [];
-  return people.slice(0, MAX_CONTACTS_PER_COMPANY);
-}
-
-async function matchPerson(person, orgDomain) {
-  const body = { reveal_personal_emails: false };
-  if (person.id)         body.id = person.id;
-  if (person.first_name) body.first_name = person.first_name;
-  if (person.last_name)  body.last_name  = person.last_name;
-  if (orgDomain)         body.domain     = orgDomain;
-  if (person.organization?.name) body.organization_name = person.organization.name;
-  try {
-    const r = await apolloPost('/people/match', body);
-    return r.person || r;
-  } catch {
-    return null;
-  }
-}
-const emailUnlocked = (e) => e && /@/.test(e) && !/email_not_unlocked/i.test(e);
-
 // ---------- main ----------
 async function main() {
-  apiKey = loadKey();
+  const apiKey = loadKey();
+  const apollo = createApolloClient(apiKey);
   const titles = JSON.parse(fs.readFileSync(opts.titlesPath, 'utf8'));
   const inputEins = await loadEins();
   if (!inputEins.length) {
@@ -293,13 +183,13 @@ async function main() {
   let contactsWritten = 0;
   for (const e of callable) {
     try {
-      const org = await resolveOrg(e);
+      const org = await apollo.resolveOrg(e);
       if (!org) {
         appendJsonl(ATTEMPTED_JSONL, { ein: e.ein, attempted_at: now(), reason: 'no_org_match' });
         console.error(`  ${e.ein}  ${e.sponsor_name}  -> no_org_match`);
         continue;
       }
-      const people = await findPeople(org.id, titles);
+      const people = await apollo.findPeople(org.id, titles);
       if (!people.length) {
         appendJsonl(ATTEMPTED_JSONL, { ein: e.ein, attempted_at: now(), reason: 'no_people_match' });
         console.error(`  ${e.ein}  ${e.sponsor_name}  -> no_people_match`);
@@ -307,19 +197,9 @@ async function main() {
       }
       let revealed = 0;
       for (const p of people) {
-        const m = await matchPerson(p, org.domain);
-        const email = m?.email;
-        if (!emailUnlocked(email)) continue;
-        appendJsonl(CONTACTS_JSONL, {
-          ein: e.ein,
-          contact_name: [m.first_name, m.last_name].filter(Boolean).join(' ') || m.name || p.name || '',
-          contact_title: m.title || p.title || '',
-          contact_email: email,
-          contact_linkedin: m.linkedin_url || p.linkedin_url || '',
-          org_domain: org.domain || '',
-          match_confidence: org.score,
-          enriched_at: now(),
-        });
+        const m = await apollo.matchPerson(p, org.domain);
+        if (!emailUnlocked(m?.email)) continue;
+        appendJsonl(CONTACTS_JSONL, buildContactRecord(e, org, m, p));
         revealed++;
         contactsWritten++;
       }
