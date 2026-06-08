@@ -5,7 +5,7 @@ resource "aws_apigatewayv2_api" "api" {
   cors_configuration {
     allow_origins  = ["*"]
     allow_methods  = ["GET", "POST", "OPTIONS"]
-    allow_headers  = ["content-type", "x-apollo-key"]
+    allow_headers  = ["content-type", "x-apollo-key", "x-user-email"]
     expose_headers = ["content-type"]
     max_age        = 300
   }

@@ -22,3 +22,18 @@ resource "aws_dynamodb_table" "contacts" {
     Name = "Biolab Leads Contacts Cache"
   }
 }
+
+resource "aws_dynamodb_table" "authorized_emails" {
+  name         = var.authorized_emails_table_name
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "email"
+
+  attribute {
+    name = "email"
+    type = "S"
+  }
+
+  tags = {
+    Name = "Biolab Leads API Allowlist"
+  }
+}

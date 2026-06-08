@@ -35,6 +35,11 @@ resource "aws_iam_role_policy" "api_lambda" {
       },
       {
         Effect   = "Allow"
+        Action   = ["dynamodb:GetItem"]
+        Resource = aws_dynamodb_table.authorized_emails.arn
+      },
+      {
+        Effect   = "Allow"
         Action   = ["s3:GetObject"]
         Resource = "${aws_s3_bucket.data.arn}/*"
       },
