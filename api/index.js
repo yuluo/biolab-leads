@@ -8,6 +8,7 @@
 const { filterEmployers, getEmployer } = require('./lib/employers');
 const { getContacts, putContacts } = require('./lib/contacts');
 const { enrichOne } = require('./lib/enrich-core');
+const { authorize } = require('./lib/auth');
 const TITLES = require('./config/hr_titles.json');
 
 const json = (statusCode, body) => ({
@@ -83,6 +84,9 @@ exports.handler = async (event) => {
   const qs = event.queryStringParameters || {};
 
   try {
+    const auth = await authorize(event);
+    if (!auth.ok) return json(auth.status, { error: auth.error });
+
     if (method === 'GET' && path === '/employers') return await handleEmployers(qs);
     if (method === 'GET' && path === '/contacts') return await handleGetContacts(qs);
     if (method === 'POST' && path === '/contacts/enrich') return await handleEnrich(event);

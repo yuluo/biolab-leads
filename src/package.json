@@ -12,7 +12,8 @@
     "query": "node scripts/query.js",
     "enrich": "node scripts/enrich.js",
     "deploy-data": "bash scripts/deploy_data.sh",
-    "seed-contacts": "node scripts/seed_contacts.js"
+    "seed-contacts": "node scripts/seed_contacts.js",
+    "authorize-email": "node scripts/authorize_email.js"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.600.0",

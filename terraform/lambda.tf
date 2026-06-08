@@ -16,9 +16,10 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      DATA_BUCKET    = aws_s3_bucket.data.bucket
-      EMPLOYERS_KEY  = "employers.json.gz"
-      CONTACTS_TABLE = aws_dynamodb_table.contacts.name
+      DATA_BUCKET             = aws_s3_bucket.data.bucket
+      EMPLOYERS_KEY           = "employers.json.gz"
+      CONTACTS_TABLE          = aws_dynamodb_table.contacts.name
+      AUTHORIZED_EMAILS_TABLE = aws_dynamodb_table.authorized_emails.name
     }
   }
 }

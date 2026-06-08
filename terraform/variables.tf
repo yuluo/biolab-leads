@@ -16,6 +16,12 @@ variable "contacts_table_name" {
   default     = "biolab-leads-contacts-prod"
 }
 
+variable "authorized_emails_table_name" {
+  description = "DynamoDB table name for the API allowlist (authorized emails)"
+  type        = string
+  default     = "biolab-leads-authorized-emails-prod"
+}
+
 variable "lambda_runtime" {
   description = "Lambda runtime version"
   type        = string

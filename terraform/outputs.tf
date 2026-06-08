@@ -8,6 +8,11 @@ output "contacts_table_name" {
   value       = aws_dynamodb_table.contacts.name
 }
 
+output "authorized_emails_table_name" {
+  description = "DynamoDB table holding the API allowlist"
+  value       = aws_dynamodb_table.authorized_emails.name
+}
+
 output "api_endpoint" {
   description = "Public base URL of the HTTP API (the only public surface)"
   value       = aws_apigatewayv2_api.api.api_endpoint
