@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# biolab-leads — web UI
 
-## Getting Started
+Search self-insured employers (DOL Form 5500) and surface benefits/HR contacts. A client-side
+Next.js app that talks to the biolab-leads HTTP API. Branded to match ant-tek.com.
 
-First, run the development server:
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Enter an **allowlisted** email + your **Apollo key** in the Access bar, then search. The API base
+URL comes from `NEXT_PUBLIC_API_BASE` (see `.env.local.example`) and defaults to the deployed API.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build (static export)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The app is fully client-side and builds to a static site (`output: "export"`):
 
-## Learn More
+```bash
+npm run build        # emits ./out (static HTML/CSS/JS, self-hosted fonts)
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy on Netlify
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+This repo has a root `netlify.toml` configured for this app, so the site settings auto-fill.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Netlify → Add new site → Import from Git** → authorize GitHub, pick `yuluo/biolab-leads`.
+2. Settings auto-fill from `netlify.toml`: base `web`, build `npm run build`, publish `web/out`,
+   Node 20. Confirm and deploy → you get a `https://<name>.netlify.app` URL.
+3. **(Optional)** Override the API by setting `NEXT_PUBLIC_API_BASE` under
+   Site settings → Environment variables (the deployed API is the default in code).
+4. **(Optional)** Add a custom domain (e.g. `leads.ant-tek.com`) under Domain management, then
+   create the **CNAME** record Netlify shows at your DNS provider. Netlify provisions TLS.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The page is public, but data stays gated by the API's authorized-email allowlist + Apollo key.
+Pushes to `main` auto-deploy once the repo is connected.
