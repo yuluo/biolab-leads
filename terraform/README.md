@@ -11,6 +11,15 @@ A public HTTP API is the **only** public surface; the data layer behind it is pr
   - `GET /contacts?ein=` — retained contacts for one employer (DynamoDB).
   - `POST /contacts/enrich` — enrich one employer via Apollo using the caller's `X-Apollo-Key`
     header, persist to DynamoDB, return contacts. The key is used transiently, never stored.
+  - `GET /admin/usage` — per-account usage log. **Not** gated by the email allowlist; instead
+    requires `X-Admin-Token` matching the `admin_token` variable. Query params: `email=` (one
+    account), `day=YYYY-MM-DD`, `since=`/`until=` (sort-key bounds), `limit=` (≤1000),
+    `format=summary` (per-account/per-endpoint rollup) or default events list.
+- **Usage log** → DynamoDB `biolab-leads-api-usage-prod` (PK `email` / SK `<iso>#<requestId>`,
+  GSI `by_day`). One row per authorized public request — search events record their filters and
+  result count; enrich records `apollo_calls`, `contacts_found`, and `reason`. Rows expire via
+  TTL after 90 days. The admin token is set with `TF_VAR_admin_token` (or tfvars) and is **never
+  committed** — e.g. `export TF_VAR_admin_token=$(openssl rand -hex 24)` before `terraform apply`.
 - **Allowlist** → DynamoDB `biolab-leads-authorized-emails-prod` (PK `email`), managed with
   `npm --prefix src run authorize-email -- <add|remove|list>`. Self-asserted email gate (not
   cryptographic auth).
@@ -54,6 +63,7 @@ Override with env vars `DATA_BUCKET` / `CONTACTS_TABLE` if running outside the t
 - `api_endpoint` — public base URL of the HTTP API (the only public surface)
 - `data_bucket_name` — private S3 bucket holding the employer dataset
 - `contacts_table_name` — DynamoDB contacts cache
+- `usage_table_name` — DynamoDB per-account usage log
 
 ## Not yet built (next steps)
 

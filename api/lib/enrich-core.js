@@ -55,7 +55,9 @@ function buildContactRecord(emp, org, m, p) {
 // Build an Apollo client bound to a single API key. Returns the three calls the
 // enrichment flow needs. The X-Api-Key header is the only thing that varies per caller.
 function createApolloClient(apiKey) {
+  let callCount = 0;
   async function apolloPost(endpoint, body, attempt = 0) {
+    if (attempt === 0) callCount += 1;
     const res = await fetch(`${APOLLO_BASE}${endpoint}`, {
       method: 'POST',
       headers: {
@@ -125,29 +127,30 @@ function createApolloClient(apiKey) {
     }
   }
 
-  return { apolloPost, resolveOrg, findPeople, matchPerson };
+  return { apolloPost, resolveOrg, findPeople, matchPerson, getCallCount: () => callCount };
 }
 
 // Enrich a single employer end-to-end. emp: { ein, sponsor_name, city, state, business_code }.
 // Returns { contacts: [...], reason } where reason is one of:
 // 'ok' | 'no_org_match' | 'no_people_match' | 'no_email_revealed' | 'trust_fund_skipped' | 'error'.
 async function enrichOne({ emp, apiKey, titles }) {
-  if (isTrust(emp.sponsor_name)) return { contacts: [], reason: 'trust_fund_skipped' };
+  if (isTrust(emp.sponsor_name)) return { contacts: [], reason: 'trust_fund_skipped', apollo_calls: 0 };
   const client = createApolloClient(apiKey);
+  const calls = () => client.getCallCount();
   try {
     const org = await client.resolveOrg(emp);
-    if (!org) return { contacts: [], reason: 'no_org_match' };
+    if (!org) return { contacts: [], reason: 'no_org_match', apollo_calls: calls() };
     const people = await client.findPeople(org.id, titles);
-    if (!people.length) return { contacts: [], reason: 'no_people_match' };
+    if (!people.length) return { contacts: [], reason: 'no_people_match', apollo_calls: calls() };
     const contacts = [];
     for (const p of people) {
       const m = await client.matchPerson(p, org.domain);
       if (!emailUnlocked(m?.email)) continue;
       contacts.push(buildContactRecord(emp, org, m, p));
     }
-    return { contacts, reason: contacts.length ? 'ok' : 'no_email_revealed' };
+    return { contacts, reason: contacts.length ? 'ok' : 'no_email_revealed', apollo_calls: calls() };
   } catch (err) {
-    return { contacts: [], reason: 'error', error: err.message };
+    return { contacts: [], reason: 'error', error: err.message, apollo_calls: calls() };
   }
 }
 

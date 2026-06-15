@@ -13,6 +13,11 @@ output "authorized_emails_table_name" {
   value       = aws_dynamodb_table.authorized_emails.name
 }
 
+output "usage_table_name" {
+  description = "DynamoDB table holding the per-account usage log"
+  value       = aws_dynamodb_table.usage.name
+}
+
 output "api_endpoint" {
   description = "Public base URL of the HTTP API (the only public surface)"
   value       = aws_apigatewayv2_api.api.api_endpoint
