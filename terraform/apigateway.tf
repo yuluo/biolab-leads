@@ -5,7 +5,7 @@ resource "aws_apigatewayv2_api" "api" {
   cors_configuration {
     allow_origins  = ["*"]
     allow_methods  = ["GET", "POST", "OPTIONS"]
-    allow_headers  = ["content-type", "x-apollo-key", "x-user-email", "x-admin-token"]
+    allow_headers  = ["content-type", "x-apollo-key", "x-user-email"]
     expose_headers = ["content-type"]
     max_age        = 300
   }
@@ -34,12 +34,6 @@ resource "aws_apigatewayv2_route" "get_contacts" {
 resource "aws_apigatewayv2_route" "enrich_contacts" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "POST /contacts/enrich"
-  target    = "integrations/${aws_apigatewayv2_integration.api.id}"
-}
-
-resource "aws_apigatewayv2_route" "admin_usage" {
-  api_id    = aws_apigatewayv2_api.api.id
-  route_key = "GET /admin/usage"
   target    = "integrations/${aws_apigatewayv2_integration.api.id}"
 }
 

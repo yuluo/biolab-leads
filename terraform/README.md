@@ -11,15 +11,18 @@ A public HTTP API is the **only** public surface; the data layer behind it is pr
   - `GET /contacts?ein=` — retained contacts for one employer (DynamoDB).
   - `POST /contacts/enrich` — enrich one employer via Apollo using the caller's `X-Apollo-Key`
     header, persist to DynamoDB, return contacts. The key is used transiently, never stored.
-  - `GET /admin/usage` — per-account usage log. **Not** gated by the email allowlist; instead
-    requires `X-Admin-Token` matching the `admin_token` variable. Query params: `email=` (one
-    account), `day=YYYY-MM-DD`, `since=`/`until=` (sort-key bounds), `limit=` (≤1000),
-    `format=summary` (per-account/per-endpoint rollup) or default events list.
 - **Usage log** → DynamoDB `biolab-leads-api-usage-prod` (PK `email` / SK `<iso>#<requestId>`,
-  GSI `by_day`). One row per authorized public request — search events record their filters and
-  result count; enrich records `apollo_calls`, `contacts_found`, and `reason`. Rows expire via
-  TTL after 90 days. The admin token is set with `TF_VAR_admin_token` (or tfvars) and is **never
-  committed** — e.g. `export TF_VAR_admin_token=$(openssl rand -hex 24)` before `terraform apply`.
+  GSI `by_day`). One row per authorized request — search events record their filters and result
+  count; enrich records `apollo_calls`, `contacts_found`, and `reason`. Rows expire via TTL after
+  90 days. The Lambda only has `PutItem` on this table; reads are done directly with your AWS
+  credentials via `npm --prefix src run usage` (no public admin endpoint):
+
+  ```sh
+  npm --prefix src run usage                     # recent activity, all accounts
+  npm --prefix src run usage -- --email a@b.com  # one account, newest first
+  npm --prefix src run usage -- --day 2026-06-15 # one day (by_day GSI)
+  npm --prefix src run usage -- --summary        # per-account / per-endpoint rollup
+  ```
 - **Allowlist** → DynamoDB `biolab-leads-authorized-emails-prod` (PK `email`), managed with
   `npm --prefix src run authorize-email -- <add|remove|list>`. Self-asserted email gate (not
   cryptographic auth).

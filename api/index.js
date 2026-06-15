@@ -3,17 +3,15 @@
 //   GET  /contacts?ein=    — retained contacts for one employer (DynamoDB)
 //   POST /contacts/enrich  — enrich one employer via Apollo using the caller's
 //                            X-Apollo-Key, persist to DynamoDB, return contacts
-//   GET  /admin/usage      — per-account usage log (X-Admin-Token, not the allowlist)
-// Every authorized public request is logged to the usage table (per account).
+// Every authorized request is logged to the usage table (per account); inspect it
+// with `npm --prefix src run usage` (reads the table directly with AWS credentials).
 // CORS is handled by API Gateway (cors_configuration), not here.
 
 const { filterEmployers, getEmployer } = require('./lib/employers');
 const { getContacts, putContacts } = require('./lib/contacts');
 const { enrichOne } = require('./lib/enrich-core');
 const { authorize } = require('./lib/auth');
-const { authorizeAdmin } = require('./lib/admin-auth');
 const { safeRecordUsage } = require('./lib/usage');
-const { queryUsage, summarize } = require('./lib/usage-admin');
 const TITLES = require('./config/hr_titles.json');
 
 const json = (statusCode, body) => ({
@@ -105,18 +103,6 @@ async function handleEnrich(event) {
   return { res: json(200, { ein, contacts, reason }), usage };
 }
 
-async function handleAdminUsage(qs) {
-  const events = await queryUsage({
-    email: qs.email || null,
-    day: qs.day || null,
-    since: qs.since || null,
-    until: qs.until || null,
-    limit: qs.limit,
-  });
-  if (qs.format === 'summary') return json(200, summarize(events));
-  return json(200, { count: events.length, events });
-}
-
 exports.handler = async (event) => {
   const method = event.requestContext?.http?.method || '';
   const rawPath = event.requestContext?.http?.path || event.rawPath || '';
@@ -124,14 +110,6 @@ exports.handler = async (event) => {
   const qs = event.queryStringParameters || {};
 
   try {
-    // Admin routes use a separate token, not the email allowlist.
-    if (path.startsWith('/admin')) {
-      const admin = authorizeAdmin(event);
-      if (!admin.ok) return json(admin.status, { error: admin.error });
-      if (method === 'GET' && path === '/admin/usage') return await handleAdminUsage(qs);
-      return json(404, { error: `no route for ${method} ${path}` });
-    }
-
     const auth = await authorize(event);
     if (!auth.ok) return json(auth.status, { error: auth.error });
 

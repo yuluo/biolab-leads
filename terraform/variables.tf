@@ -28,12 +28,6 @@ variable "usage_table_name" {
   default     = "biolab-leads-api-usage-prod"
 }
 
-variable "admin_token" {
-  description = "Shared secret for the GET /admin/usage route (set via TF_VAR_admin_token; do not commit)"
-  type        = string
-  sensitive   = true
-}
-
 variable "lambda_runtime" {
   description = "Lambda runtime version"
   type        = string
