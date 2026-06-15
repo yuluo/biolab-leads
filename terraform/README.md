@@ -18,11 +18,14 @@ A public HTTP API is the **only** public surface; the data layer behind it is pr
   credentials via `npm --prefix src run usage` (no public admin endpoint):
 
   ```sh
-  npm --prefix src run usage                     # recent activity, all accounts
-  npm --prefix src run usage -- --email a@b.com  # one account, newest first
-  npm --prefix src run usage -- --day 2026-06-15 # one day (by_day GSI)
-  npm --prefix src run usage -- --summary        # per-account / per-endpoint rollup
+  npm --prefix src run usage -- --days 7 --summary  # past 7 days, per-account rollup
+  npm --prefix src run usage -- --email a@b.com     # one account, newest first
+  npm --prefix src run usage -- --day 2026-06-15    # one day (by_day GSI)
+  npm --prefix src run usage -- --since-date 2026-06-01 --until-date 2026-06-07 --summary
   ```
+
+  The `/usage` skill wraps this with natural ranges (`/usage past month`,
+  `/usage today`, `/usage <email>`) and defaults to the past 7 days.
 - **Allowlist** → DynamoDB `biolab-leads-authorized-emails-prod` (PK `email`), managed with
   `npm --prefix src run authorize-email -- <add|remove|list>`. Self-asserted email gate (not
   cryptographic auth).

@@ -4,13 +4,17 @@
 //
 // Usage:
 //   npm run usage                          # recent activity across all accounts
+//   npm run usage -- --days 7 --summary    # past 7 days, per-account rollup
+//   npm run usage -- --since-date 2026-06-01 --until-date 2026-06-07 --summary
 //   npm run usage -- --email a@b.com       # one account, newest first
 //   npm run usage -- --day 2026-06-15      # one day (via the by_day GSI)
 //   npm run usage -- --summary             # per-account / per-endpoint rollup
-//   npm run usage -- --email a@b.com --summary --limit 500
 //   npm run usage -- --json                # raw JSON instead of a table
 //
-// Flags: --email --day --since --until --limit (≤1000) --summary --json
+// Flags: --email --days N --since-date / --until-date (YYYY-MM-DD) --day
+//        --since --until (raw sk bounds) --limit (≤1000) --summary --json
+// A date range (--days or --since-date/--until-date) sweeps the by_day GSI and
+// counts every event in the window (limit only caps the printed event list).
 // Table name from `terraform output -raw usage_table_name` or env USAGE_TABLE.
 // Region from AWS_REGION, defaults to us-east-1.
 
@@ -91,6 +95,63 @@ async function queryUsage(doc, table, { email, day, since, until, limit }) {
   return items.slice(0, lim);
 }
 
+// Inclusive list of "YYYY-MM-DD" strings (UTC) between two dates.
+function enumerateDates(sinceDate, untilDate) {
+  const out = [];
+  const cur = new Date(`${sinceDate}T00:00:00Z`);
+  const end = new Date(`${untilDate}T00:00:00Z`);
+  while (cur <= end) {
+    out.push(cur.toISOString().slice(0, 10));
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  return out;
+}
+
+// Resolve a date window from flags, or null if none given. --days N is the last
+// N calendar days (UTC) ending today; --since-date/--until-date is explicit.
+function rangeFromFlags(flags, today) {
+  const end = today || new Date().toISOString().slice(0, 10);
+  if (flags['since-date'] || flags['until-date']) {
+    return {
+      sinceDate: String(flags['since-date'] || flags['until-date']),
+      untilDate: String(flags['until-date'] || end),
+    };
+  }
+  if (flags.days != null && flags.days !== false) {
+    const n = Math.max(parseInt(flags.days, 10) || 7, 1);
+    const start = new Date(`${end}T00:00:00Z`);
+    start.setUTCDate(start.getUTCDate() - (n - 1));
+    return { sinceDate: start.toISOString().slice(0, 10), untilDate: end };
+  }
+  return null;
+}
+
+// Sweep the by_day GSI across a date window, paginating fully so rollups are
+// complete. Optionally narrow to one account.
+async function queryRange(doc, table, { sinceDate, untilDate, email }) {
+  const all = [];
+  for (const day of enumerateDates(sinceDate, untilDate)) {
+    let ExclusiveStartKey;
+    do {
+      const res = await doc.send(new QueryCommand({
+        TableName: table,
+        IndexName: 'by_day',
+        KeyConditionExpression: '#d = :d',
+        ExpressionAttributeNames: { '#d': 'day' },
+        ExpressionAttributeValues: { ':d': day },
+        ScanIndexForward: false,
+        ExclusiveStartKey,
+      }));
+      all.push(...(res.Items || []));
+      ExclusiveStartKey = res.LastEvaluatedKey;
+    } while (ExclusiveStartKey);
+  }
+  const e = email ? String(email).trim().toLowerCase() : null;
+  const filtered = e ? all.filter((it) => it.email === e) : all;
+  filtered.sort((a, b) => (b.ts_epoch || 0) - (a.ts_epoch || 0));
+  return filtered;
+}
+
 function summarize(events) {
   const byAccount = {};
   const byEndpoint = {};
@@ -144,22 +205,30 @@ async function main() {
   const flags = parseFlags(process.argv.slice(2));
   const table = resolveTableName();
   const doc = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
+  const email = typeof flags.email === 'string' ? flags.email : null;
 
-  const events = await queryUsage(doc, table, {
-    email: typeof flags.email === 'string' ? flags.email : null,
-    day: typeof flags.day === 'string' ? flags.day : null,
-    since: typeof flags.since === 'string' ? flags.since : null,
-    until: typeof flags.until === 'string' ? flags.until : null,
-    limit: flags.limit,
-  });
+  const range = rangeFromFlags(flags);
+  let events;
+  if (range && !flags.day) {
+    events = await queryRange(doc, table, { ...range, email });
+  } else {
+    events = await queryUsage(doc, table, {
+      email,
+      day: typeof flags.day === 'string' ? flags.day : null,
+      since: typeof flags.since === 'string' ? flags.since : null,
+      until: typeof flags.until === 'string' ? flags.until : null,
+      limit: flags.limit,
+    });
+  }
 
   if (flags.json) { console.log(JSON.stringify(flags.summary ? summarize(events) : events, null, 2)); return; }
+  if (range) console.log(`window: ${range.sinceDate}..${range.untilDate}\n`);
   if (flags.summary) { printSummary(summarize(events)); return; }
-  printEvents(events);
+  printEvents(events.slice(0, clampLimit(flags.limit)));
 }
 
 if (require.main === module) {
   main().catch((e) => { console.error('usage failed:', e.message); process.exit(1); });
 }
 
-module.exports = { parseFlags, clampLimit, summarize, describeDetail };
+module.exports = { parseFlags, clampLimit, summarize, describeDetail, enumerateDates, rangeFromFlags };
