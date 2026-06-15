@@ -40,6 +40,11 @@ resource "aws_iam_role_policy" "api_lambda" {
       },
       {
         Effect   = "Allow"
+        Action   = ["dynamodb:PutItem"]
+        Resource = aws_dynamodb_table.usage.arn
+      },
+      {
+        Effect   = "Allow"
         Action   = ["s3:GetObject"]
         Resource = "${aws_s3_bucket.data.arn}/*"
       },

@@ -22,6 +22,12 @@ variable "authorized_emails_table_name" {
   default     = "biolab-leads-authorized-emails-prod"
 }
 
+variable "usage_table_name" {
+  description = "DynamoDB table name for the per-account API usage log"
+  type        = string
+  default     = "biolab-leads-api-usage-prod"
+}
+
 variable "lambda_runtime" {
   description = "Lambda runtime version"
   type        = string

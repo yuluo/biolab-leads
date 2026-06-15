@@ -1,14 +1,17 @@
-// Public HTTP API (API Gateway v2 / Lambda proxy). Three routes:
+// Public HTTP API (API Gateway v2 / Lambda proxy). Routes:
 //   GET  /employers        — filtered, paginated employer list (in-memory)
 //   GET  /contacts?ein=    — retained contacts for one employer (DynamoDB)
 //   POST /contacts/enrich  — enrich one employer via Apollo using the caller's
 //                            X-Apollo-Key, persist to DynamoDB, return contacts
+// Every authorized request is logged to the usage table (per account); inspect it
+// with `npm --prefix src run usage` (reads the table directly with AWS credentials).
 // CORS is handled by API Gateway (cors_configuration), not here.
 
 const { filterEmployers, getEmployer } = require('./lib/employers');
 const { getContacts, putContacts } = require('./lib/contacts');
 const { enrichOne } = require('./lib/enrich-core');
 const { authorize } = require('./lib/auth');
+const { safeRecordUsage } = require('./lib/usage');
 const TITLES = require('./config/hr_titles.json');
 
 const json = (statusCode, body) => ({
@@ -29,10 +32,13 @@ function parseBoolOrNull(v) {
   return null;
 }
 
+// Handlers return { res, usage } — res is the HTTP envelope, usage is the
+// per-request detail logged for the calling account (or null to skip logging).
+
 async function handleEmployers(qs) {
   const limit = Math.min(Math.max(parseIntOrNull(qs.limit) ?? 50, 1), 500);
   const offset = Math.max(parseIntOrNull(qs.offset) ?? 0, 0);
-  const result = await filterEmployers({
+  const params = {
     state: qs.state || null,
     funding_type: qs.funding_type || 'self-insured,partial',
     min_participants: parseIntOrNull(qs.min_participants),
@@ -45,36 +51,56 @@ async function handleEmployers(qs) {
     order: qs.order || 'desc',
     limit,
     offset,
-  });
-  return json(200, result);
+  };
+  const result = await filterEmployers(params);
+  const usage = {
+    type: 'search',
+    filters: {
+      state: params.state,
+      funding_type: params.funding_type,
+      min_participants: params.min_participants,
+      max_participants: params.max_participants,
+      industry: params.industry,
+      q: params.q,
+      has_stop_loss: params.has_stop_loss,
+      has_health_insurance: params.has_health_insurance,
+      sort: params.sort,
+      order: params.order,
+    },
+    result_count: result.total,
+    limit,
+    offset,
+  };
+  return { res: json(200, result), usage };
 }
 
 async function handleGetContacts(qs) {
   const ein = qs.ein && String(qs.ein).trim();
-  if (!ein) return json(400, { error: 'ein query parameter is required' });
+  if (!ein) return { res: json(400, { error: 'ein query parameter is required' }), usage: null };
   const contacts = await getContacts(ein);
-  return json(200, { ein, contacts });
+  return { res: json(200, { ein, contacts }), usage: { type: 'contacts_lookup', ein, count: contacts.length } };
 }
 
 async function handleEnrich(event) {
   const headers = event.headers || {};
   const apiKey = headers['x-apollo-key'] || headers['X-Apollo-Key'];
-  if (!apiKey) return json(400, { error: 'X-Apollo-Key header is required' });
+  if (!apiKey) return { res: json(400, { error: 'X-Apollo-Key header is required' }), usage: null };
 
   let body = {};
   if (event.body) {
     const raw = event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body;
-    try { body = JSON.parse(raw); } catch { return json(400, { error: 'invalid JSON body' }); }
+    try { body = JSON.parse(raw); } catch { return { res: json(400, { error: 'invalid JSON body' }), usage: null }; }
   }
   const ein = body.ein && String(body.ein).trim();
-  if (!ein) return json(400, { error: 'ein is required in the request body' });
+  if (!ein) return { res: json(400, { error: 'ein is required in the request body' }), usage: null };
 
   const emp = await getEmployer(ein);
-  if (!emp) return json(404, { ein, contacts: [], reason: 'unknown_ein' });
+  if (!emp) return { res: json(404, { ein, contacts: [], reason: 'unknown_ein' }), usage: { type: 'enrich', ein, reason: 'unknown_ein', apollo_calls: 0, contacts_found: 0 } };
 
-  const { contacts, reason } = await enrichOne({ emp, apiKey, titles: TITLES });
+  const { contacts, reason, apollo_calls } = await enrichOne({ emp, apiKey, titles: TITLES });
   if (contacts.length) await putContacts(contacts);
-  return json(200, { ein, contacts, reason });
+  const usage = { type: 'enrich', ein, reason, apollo_calls, contacts_found: contacts.length };
+  return { res: json(200, { ein, contacts, reason }), usage };
 }
 
 exports.handler = async (event) => {
@@ -87,10 +113,22 @@ exports.handler = async (event) => {
     const auth = await authorize(event);
     if (!auth.ok) return json(auth.status, { error: auth.error });
 
-    if (method === 'GET' && path === '/employers') return await handleEmployers(qs);
-    if (method === 'GET' && path === '/contacts') return await handleGetContacts(qs);
-    if (method === 'POST' && path === '/contacts/enrich') return await handleEnrich(event);
-    return json(404, { error: `no route for ${method} ${path}` });
+    let handled = null;
+    if (method === 'GET' && path === '/employers') handled = await handleEmployers(qs);
+    else if (method === 'GET' && path === '/contacts') handled = await handleGetContacts(qs);
+    else if (method === 'POST' && path === '/contacts/enrich') handled = await handleEnrich(event);
+    else return json(404, { error: `no route for ${method} ${path}` });
+
+    if (handled.usage) {
+      await safeRecordUsage({
+        email: auth.email,
+        method,
+        path,
+        detail: handled.usage,
+        requestId: event.requestContext?.requestId,
+      });
+    }
+    return handled.res;
   } catch (err) {
     return json(500, { error: err.message });
   }

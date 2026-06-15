@@ -11,6 +11,18 @@ A public HTTP API is the **only** public surface; the data layer behind it is pr
   - `GET /contacts?ein=` — retained contacts for one employer (DynamoDB).
   - `POST /contacts/enrich` — enrich one employer via Apollo using the caller's `X-Apollo-Key`
     header, persist to DynamoDB, return contacts. The key is used transiently, never stored.
+- **Usage log** → DynamoDB `biolab-leads-api-usage-prod` (PK `email` / SK `<iso>#<requestId>`,
+  GSI `by_day`). One row per authorized request — search events record their filters and result
+  count; enrich records `apollo_calls`, `contacts_found`, and `reason`. Rows expire via TTL after
+  90 days. The Lambda only has `PutItem` on this table; reads are done directly with your AWS
+  credentials via `npm --prefix src run usage` (no public admin endpoint):
+
+  ```sh
+  npm --prefix src run usage                     # recent activity, all accounts
+  npm --prefix src run usage -- --email a@b.com  # one account, newest first
+  npm --prefix src run usage -- --day 2026-06-15 # one day (by_day GSI)
+  npm --prefix src run usage -- --summary        # per-account / per-endpoint rollup
+  ```
 - **Allowlist** → DynamoDB `biolab-leads-authorized-emails-prod` (PK `email`), managed with
   `npm --prefix src run authorize-email -- <add|remove|list>`. Self-asserted email gate (not
   cryptographic auth).
@@ -54,6 +66,7 @@ Override with env vars `DATA_BUCKET` / `CONTACTS_TABLE` if running outside the t
 - `api_endpoint` — public base URL of the HTTP API (the only public surface)
 - `data_bucket_name` — private S3 bucket holding the employer dataset
 - `contacts_table_name` — DynamoDB contacts cache
+- `usage_table_name` — DynamoDB per-account usage log
 
 ## Not yet built (next steps)
 

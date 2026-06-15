@@ -20,6 +20,7 @@ resource "aws_lambda_function" "api" {
       EMPLOYERS_KEY           = "employers.json.gz"
       CONTACTS_TABLE          = aws_dynamodb_table.contacts.name
       AUTHORIZED_EMAILS_TABLE = aws_dynamodb_table.authorized_emails.name
+      USAGE_TABLE             = aws_dynamodb_table.usage.name
     }
   }
 }

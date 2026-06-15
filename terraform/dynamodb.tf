@@ -23,6 +23,49 @@ resource "aws_dynamodb_table" "contacts" {
   }
 }
 
+resource "aws_dynamodb_table" "usage" {
+  name         = var.usage_table_name
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "email"
+  range_key    = "sk"
+
+  attribute {
+    name = "email"
+    type = "S"
+  }
+
+  attribute {
+    name = "sk"
+    type = "S"
+  }
+
+  attribute {
+    name = "day"
+    type = "S"
+  }
+
+  attribute {
+    name = "ts_epoch"
+    type = "N"
+  }
+
+  global_secondary_index {
+    name            = "by_day"
+    hash_key        = "day"
+    range_key       = "ts_epoch"
+    projection_type = "ALL"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+
+  tags = {
+    Name = "Biolab Leads API Usage Log"
+  }
+}
+
 resource "aws_dynamodb_table" "authorized_emails" {
   name         = var.authorized_emails_table_name
   billing_mode = "PAY_PER_REQUEST"
