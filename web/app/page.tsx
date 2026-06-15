@@ -194,7 +194,9 @@ export default function Home() {
           <div className="max-w-sm">
             <div className="font-display text-xl text-ink">Ant Technology</div>
             <p className="mt-1.5 text-sm text-ink-soft">
-              Vertical AI products &amp; software for mission-critical clients.
+              We build vertical AI and custom software for mission-critical teams — like
+              this tool that surfaces self-insured employer leads from public DOL data —
+              plus general IT consulting. Let&apos;s build yours.
             </p>
           </div>
           <div className="flex flex-col gap-2 font-mono text-xs md:items-end">
