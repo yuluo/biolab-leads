@@ -189,16 +189,29 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="mt-16 border-t border-line bg-panel">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10 md:flex-row md:items-start md:justify-between">
-          <div className="max-w-sm">
-            <div className="font-display text-xl text-ink">Ant Technology</div>
-            <p className="mt-1.5 text-sm text-ink-soft">
-              Vertical AI products &amp; software for mission-critical clients.
+      <footer className="mt-20 border-t border-line bg-panel">
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-[1.6fr_1fr] md:gap-16">
+          <div className="max-w-md">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-faint">
+              Built by
+            </span>
+            <div className="mt-2 font-display text-2xl text-ink">Ant Technology</div>
+            <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+              Vertical AI, custom software, and general IT consulting for
+              mission-critical teams. This self-insured employer index is one of ours.
             </p>
+            <a
+              href="https://ant-tek.com"
+              target="_blank"
+              rel="noreferrer"
+              className="group mt-6 inline-flex items-center gap-1.5 font-mono text-xs text-accent transition-colors hover:text-accent-deep"
+            >
+              Have a project? Let&apos;s build it
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+            </a>
           </div>
-          <div className="flex flex-col gap-2 font-mono text-xs md:items-end">
-            <span className="text-[10px] uppercase tracking-[0.16em] text-ink-faint">Contact</span>
+          <div className="flex flex-col gap-3 font-mono text-xs md:items-end">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-ink-faint">Contact</span>
             <a
               href="https://ant-tek.com"
               target="_blank"
